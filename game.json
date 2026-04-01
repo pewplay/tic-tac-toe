@@ -1,0 +1,8 @@
+{
+  "title": "Tic Tac Toe",
+  "description": "Play the classic X and O game.",
+  "keywords": ["tictactoe", "board", "classic", "puzzle"],
+  "category": "Board",
+  "author": "PewPlay",
+  "playMode": "SinglePlayer"
+}
