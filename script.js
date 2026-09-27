@@ -39,11 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const tiles = document.querySelectorAll('.tile');
 
   const handleClick = (tile) => {
+    if (isGameOver) return;
     if (isOnePlayer === true) {
       if (isXTurn && tile.textContent === '') {
         markX(tile);
         isComputerTurn = true;
-        !isGameOver ? 
+        !isGameOver && validPlays < 9 ? 
         setTimeout(() => computerMarkO(), 1000) :
         false;
       }
@@ -209,13 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         gameOverMsg.style.display = 'block';
         playerTurn.textContent === 'X' ? 
-        winner.textContent = 'Giocatore O Vince!' : 
-        winner.textContent = 'Giocatore X Vince!';
+        winner.textContent = 'Player O wins!' : 
+        winner.textContent = 'Player X wins!';
       }, 1000);
     } 
     if (!isGameOver) {
       gameOverMsg.style.display = 'block';
-      winner.textContent = 'Pareggio!'
+      winner.textContent = 'Draw!'
     }
   }
 
@@ -245,5 +246,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   resetBtn.addEventListener('click', () => reset());
-  playerToggleBtn.addEventListener('click', () => handleNumPlayers());
+  document.getElementById('toggle-switch').addEventListener('click', () => handleNumPlayers());
 });
