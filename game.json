@@ -1,8 +1,14 @@
 {
+  "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Tic Tac Toe",
   "description": "Play the classic X and O game.",
-  "keywords": ["tictactoe", "board", "classic", "puzzle"],
   "category": "Board",
+  "tags": [
+    "tictactoe",
+    "board",
+    "classic",
+    "puzzle"
+  ],
   "author": "PewPlay",
   "playMode": "SinglePlayer"
 }
