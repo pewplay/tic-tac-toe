@@ -86,6 +86,7 @@ header #player-turn {
   height: 25px;
   border-radius: 100px;
   border: 2px solid #F6F7EB;
+  cursor: pointer;
 }
 #num-of-players #toggle-switch #toggle-btn {
   float: left;

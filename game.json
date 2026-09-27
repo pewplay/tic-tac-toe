@@ -1,43 +1,58 @@
 {
   "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Tic Tac Toe",
-  "description": "Play the classic X and O game.",
-  "about": "Tic Tac Toe is a browser game where you place X or O in an empty square and try to make a line of three. Start a new match with the on-screen button.\n\nStart a round in your browser and use the controls below to play.",
-  "howToPlay": "Place X or O in an empty square and try to make a line of three. Start a new match with the on-screen button.",
+  "description": "Line up three X's in a row against the computer or a friend on the same screen in this quick, free Tic Tac Toe game for your browser.",
+  "about": "Tic Tac Toe is the timeless game of X's and O's, played on a bright 3×3 grid. Take turns placing your mark and be the first to get three in a row horizontally, vertically or diagonally. When someone wins, the winning line lights up in yellow, and a full board with no line ends in a draw.\n\nThere are two ways to play. In 1 Player mode you are X and the computer answers with an O a moment after each of your moves, choosing a random free square, so it is a relaxed opponent that is great for kids and beginners. Flip the switch to 2 Players and you and a friend take turns on the same phone, tablet or computer.\n\nEvery round lasts less than a minute, which makes it perfect for a quick break or a friendly rematch.",
+  "howToPlay": "Players take turns placing X and O on the 3×3 grid, and X always goes first. The first player to get three marks in a row, column or diagonal wins. If all nine squares are filled with no line, the game is a draw; press New game to play again.",
   "controls": [
     {
-      "input": "Click / tap",
-      "action": "Place your mark"
+      "input": "Click / Tap",
+      "action": "Place your mark on a square"
+    },
+    {
+      "input": "Switch",
+      "action": "Choose 1 Player or 2 Players"
     },
     {
       "input": "New game",
-      "action": "Restart the board"
+      "action": "Clear the board after a round"
     }
   ],
   "tips": [
-    "Use click / tap to place your mark.",
-    "Try another round to practice the timing and strategy."
+    "Take the center square on your first move: it is part of four possible lines.",
+    "Corners are the next best squares, since each one belongs to three lines.",
+    "Try to create two threats at once so your opponent can only block one of them.",
+    "Always check whether your opponent has two in a row before making your own move."
   ],
   "faq": [
     {
-      "question": "How do I play Tic Tac Toe?",
-      "answer": "Place X or O in an empty square and try to make a line of three. Start a new match with the on-screen button."
+      "question": "Is Tic Tac Toe free to play?",
+      "answer": "Yes. It is completely free and runs in your browser, with no download or sign-up."
     },
     {
-      "question": "Can I play Tic Tac Toe in a browser?",
-      "answer": "Yes. Open the game page and play without installing an app."
+      "question": "Can I play on a phone or tablet?",
+      "answer": "Yes. The board fits small screens and you simply tap a square to place your mark."
+    },
+    {
+      "question": "Can two people play on the same device?",
+      "answer": "Yes. Flip the switch to 2 Players and take turns tapping the board; in 1 Player mode you play X against a computer that picks random free squares."
     }
   ],
   "category": "Board",
   "tags": [
-    "tictactoe",
-    "board",
-    "classic",
-    "puzzle"
+    "tic tac toe",
+    "noughts and crosses",
+    "x and o",
+    "two player",
+    "classic"
   ],
-  "playMode": "SinglePlayer",
+  "author": "PewPlay",
+  "playMode": "Both",
   "orientation": "any",
   "cover": "cover.png",
-  "draft": true,
-  "author": "PewPlay"
+  "screenshots": [
+    "screenshots/1.png",
+    "screenshots/2.png",
+    "screenshots/3.png"
+  ]
 }
