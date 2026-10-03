@@ -2,20 +2,28 @@
   "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Tic Tac Toe",
   "description": "Line up three X's in a row against the computer or a friend on the same screen in this quick, free Tic Tac Toe game for your browser.",
-  "about": "Tic Tac Toe is the timeless game of X's and O's, played on a bright 3×3 grid. Take turns placing your mark and be the first to get three in a row horizontally, vertically or diagonally. When someone wins, the winning line lights up in yellow, and a full board with no line ends in a draw.\n\nThere are two ways to play. In 1 Player mode you are X and the computer answers with an O a moment after each of your moves, choosing a random free square, so it is a relaxed opponent that is great for kids and beginners. Flip the switch to 2 Players and you and a friend take turns on the same phone, tablet or computer.\n\nEvery round lasts less than a minute, which makes it perfect for a quick break or a friendly rematch.",
-  "howToPlay": "Players take turns placing X and O on the 3×3 grid, and X always goes first. The first player to get three marks in a row, column or diagonal wins. If all nine squares are filled with no line, the game is a draw; press New game to play again.",
+  "about": "Tic Tac Toe is the timeless game of X's and O's, played on a big, bright 3×3 grid that fills your screen. Take turns placing your mark and be the first to get three in a row horizontally, vertically or diagonally. When someone wins, a yellow line strikes through the winning row, and a full board with no line ends in a draw.\n\nThere are two ways to play. In 1 Player mode you are X and the computer answers with an O a moment after each of your moves, choosing a random free square, so it is a relaxed opponent that is great for kids and beginners. Pick 2 Players and you and a friend take turns on the same phone, tablet or computer. A scoreboard keeps track of wins and draws for each mode and is saved in your browser.\n\nEvery round lasts less than a minute, which makes it perfect for a quick break or a friendly rematch.",
+  "howToPlay": "Players take turns placing X and O on the 3×3 grid, and X always goes first. The first player to get three marks in a row, column or diagonal wins. If all nine squares are filled with no line, the game is a draw. Press Play again or New game to start the next round, and choose 1 Player or 2 Players below the board.",
   "controls": [
     {
-      "input": "Click / Tap",
-      "action": "Place your mark on a square"
+      "input": "Click / Tap square",
+      "action": "Place your mark"
     },
     {
-      "input": "Switch",
-      "action": "Choose 1 Player or 2 Players"
+      "input": "1 Player / 2 Players",
+      "action": "Play against the computer or a friend (starts a new round)"
     },
     {
-      "input": "New game",
-      "action": "Clear the board after a round"
+      "input": "New game / N key",
+      "action": "Clear the board and start a new round"
+    },
+    {
+      "input": "1-9 keys",
+      "action": "Place a mark on the matching square (1 is top left)"
+    },
+    {
+      "input": "Reset score",
+      "action": "Set the scoreboard of the current mode back to zero"
     }
   ],
   "tips": [
@@ -31,11 +39,11 @@
     },
     {
       "question": "Can I play on a phone or tablet?",
-      "answer": "Yes. The board fits small screens and you simply tap a square to place your mark."
+      "answer": "Yes. The board grows to fill your screen in portrait or landscape, and you simply tap a square to place your mark."
     },
     {
       "question": "Can two people play on the same device?",
-      "answer": "Yes. Flip the switch to 2 Players and take turns tapping the board; in 1 Player mode you play X against a computer that picks random free squares."
+      "answer": "Yes. Choose 2 Players and take turns tapping the board; in 1 Player mode you play X against a computer that picks random free squares."
     }
   ],
   "category": "Board",

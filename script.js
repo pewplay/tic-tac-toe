@@ -1,250 +1,283 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function () {
+  'use strict';
 
-  const gameboard = document.getElementById('gameboard');
-  const gameOverMsg = document.getElementById('gameover-msg');
-  const winner = document.getElementById('winner');
-  const resetBtn = document.getElementById('reset-btn');
-  const playerToggleBtn = document.getElementById('toggle-btn');
-  const playerTurn = document.getElementById('player-turn');
-  playerTurn.textContent = 'X';
-
-  const $ivory = '#F6F7EB';
-  const $green = '#ffcb03';
-
-  let tilesArr = [
-    0, 1, 2,
-    3, 4, 5,
-    6, 7, 8
+  var KEY_MODE = 'tic-tac-toe:mode';
+  var KEY_SCORES = 'tic-tac-toe:scores';
+  var LINES = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
   ];
+  var SVG_NS = 'http://www.w3.org/2000/svg';
 
-  let isOnePlayer = true;
-  let isComputerTurn = false;
-  let isXTurn = true;
-  let isGameOver = false;
-  let validPlays = 0;
-  let winningCombo;
+  var wrap = document.getElementById('board-wrap');
+  var gameboard = document.getElementById('gameboard');
+  var statusEl = document.getElementById('status');
+  var statusMark = document.getElementById('status-mark');
+  var statusText = document.getElementById('status-text');
+  var gameOverMsg = document.getElementById('gameover-msg');
+  var winnerEl = document.getElementById('winner');
+  var resetBtn = document.getElementById('reset-btn');
+  var winLine = document.getElementById('win-line');
+  var winLineEl = winLine.querySelector('line');
+  var modeBtns = document.querySelectorAll('.mode-btn');
+  var scoreEls = { x: document.getElementById('score-x'), o: document.getElementById('score-o'), d: document.getElementById('score-d') };
+  var labelX = document.getElementById('label-x');
+  var labelO = document.getElementById('label-o');
 
-  const addTiles = () => {
-    tilesArr.forEach((index) => {
-      const tile = document.createElement('div');
-      tile.id = index;
-      tile.classList.add('tile');
-      tile.addEventListener('click', () => handleClick(tile));
-      gameboard.appendChild(tile);
-    });
+  function load(key) {
+    try { return window.localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function save(key, value) {
+    try { window.localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
   }
 
-  addTiles();
+  var isOnePlayer = load(KEY_MODE) !== '2';
+  var scores = { '1': { x: 0, o: 0, d: 0 }, '2': { x: 0, o: 0, d: 0 } };
+  try {
+    var s = JSON.parse(load(KEY_SCORES));
+    ['1', '2'].forEach(function (m) {
+      if (s && s[m]) ['x', 'o', 'd'].forEach(function (k) {
+        var n = parseInt(s[m][k], 10);
+        if (n >= 0) scores[m][k] = n;
+      });
+    });
+  } catch (e) { /* keep defaults */ }
 
-  const tiles = document.querySelectorAll('.tile');
+  var cells, isXTurn, isGameOver, computerTimer = 0, msgTimer = 0;
 
-  const handleClick = (tile) => {
+  // ---------- board ----------
+  var tiles = [];
+  for (var i = 0; i < 9; i++) {
+    var tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'tile';
+    tile.id = String(i);
+    tile.setAttribute('aria-label', 'Square ' + (i + 1) + ', empty');
+    gameboard.insertBefore(tile, winLine);
+    tiles.push(tile);
+  }
+
+  function fitBoard() {
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    var size = Math.max(120, Math.floor(Math.min(w, h)));
+    gameboard.style.width = size + 'px';
+    gameboard.style.height = size + 'px';
+  }
+
+  function markSvg(mark) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('aria-hidden', 'true');
+    if (mark === 'X') {
+      svg.setAttribute('class', 'mx');
+      ['M18 18L82 82', 'M82 18L18 82'].forEach(function (d) {
+        var p = document.createElementNS(SVG_NS, 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('pathLength', '100');
+        svg.appendChild(p);
+      });
+    } else {
+      svg.setAttribute('class', 'mo');
+      var c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('cx', '50');
+      c.setAttribute('cy', '50');
+      c.setAttribute('r', '35');
+      svg.appendChild(c);
+    }
+    return svg;
+  }
+
+  // ---------- UI ----------
+  function playerName(mark) {
+    if (isOnePlayer) return mark === 'X' ? 'You' : 'Computer';
+    return 'Player ' + mark;
+  }
+
+  function setStatus(mark, text, result) {
+    statusMark.className = 'mark-chip ' + (mark ? mark.toLowerCase() : 'none');
+    statusText.textContent = text;
+    statusEl.classList.toggle('result', !!result);
+  }
+
+  function updateTurn() {
+    var mark = isXTurn ? 'X' : 'O';
+    gameboard.classList.toggle('turn-x', isXTurn && !isGameOver);
+    gameboard.classList.toggle('turn-o', !isXTurn && !isGameOver && !isOnePlayer);
+    gameboard.classList.toggle('locked', isGameOver || (isOnePlayer && !isXTurn));
     if (isGameOver) return;
-    if (isOnePlayer === true) {
-      if (isXTurn && tile.textContent === '') {
-        markX(tile);
-        isComputerTurn = true;
-        !isGameOver && validPlays < 9 ? 
-        setTimeout(() => computerMarkO(), 1000) :
-        false;
-      }
-    }
-    if (isOnePlayer === false) {
-      if (isXTurn && tile.textContent === '') {
-        markX(tile);
-      } else if (!isXTurn && tile.textContent === '') {
-        markO(tile);
-      }
-    }
+    if (isOnePlayer) setStatus(mark, isXTurn ? 'Your turn' : 'Computer is thinking…');
+    else setStatus(mark, 'Player ' + mark + '’s turn');
   }
 
-  const markX = (tile) => {
-    tile.textContent = 'X';
-    tilesArr[tile.id] = 'X';
-    validPlays++;
-    isXTurn = !isXTurn;
-    isXTurn ? playerTurn.textContent = 'X' : playerTurn.textContent = 'O';
-    checkForWin();
-    validPlays === 9 ? displayMessage() : false;
-  }
-
-  const markO = (tile) => {
-    tile.textContent = 'O';
-    tilesArr[tile.id] = 'O';
-    validPlays++;
-    isXTurn = !isXTurn;
-    isXTurn ? playerTurn.textContent = 'X' : playerTurn.textContent = 'O';
-    checkForWin();
-    validPlays === 9 ? displayMessage() : false;
-  }
-
-  const getRandomTile = () => {
-    const availTilesArr = [];
-    for (let i = 0; i < tilesArr.length; i++) {
-      if (tilesArr[i] !== 'X' && tilesArr[i] !== 'O') {
-        availTilesArr.push(i);
-      }
-    }
-    const randomIndex = Math.floor(Math.random() * availTilesArr.length);
-    return availTilesArr[randomIndex];
-  }
-
-  const computerMarkO = () => {
-    if (isComputerTurn) {
-      let randomID = getRandomTile();
-      let randomTile = document.getElementById(randomID);
-      randomTile.textContent = 'O';
-      tilesArr[randomID] = 'O';
-      validPlays++;
-      isXTurn = !isXTurn;
-      isXTurn ? playerTurn.textContent = 'X' : playerTurn.textContent = 'O';
-      checkForWin();
-      validPlays === 9 ? displayMessage() : false;
-    }
-    isComputerTurn = false;
-  }
-
-  const checkForWin = () => {
-    // winning combos
-    // [0,1,2], [3,4,5], [6,7,8], [0,3,6], 
-    // [1,4,7], [2,5,8], [0,4,8], [2,4,6]
-    tilesArr[0] === tilesArr[1] &&
-    tilesArr[1] === tilesArr[2] &&
-    tilesArr[0] === tilesArr[2] ?
-    gameOver(0) :
-    false;
-
-    tilesArr[3] === tilesArr[4] &&
-    tilesArr[4] === tilesArr[5] &&
-    tilesArr[3] === tilesArr[5] ?
-    gameOver(1) :
-    false;
-
-    tilesArr[6] === tilesArr[7] &&
-    tilesArr[7] === tilesArr[8] &&
-    tilesArr[6] === tilesArr[8] ?
-    gameOver(2) :
-    false;
-
-    tilesArr[0] === tilesArr[3] &&
-    tilesArr[3] === tilesArr[6] &&
-    tilesArr[0] === tilesArr[6] ?
-    gameOver(3) :
-    false;
-
-    tilesArr[1] === tilesArr[4] &&
-    tilesArr[4] === tilesArr[7] &&
-    tilesArr[1] === tilesArr[7] ?
-    gameOver(4) :
-    false;
-
-    tilesArr[2] === tilesArr[5] &&
-    tilesArr[5] === tilesArr[8] &&
-    tilesArr[2] === tilesArr[8] ?
-    gameOver(5) :
-    false;
-
-    tilesArr[0] === tilesArr[4] &&
-    tilesArr[4] === tilesArr[8] &&
-    tilesArr[0] === tilesArr[8] ?
-    gameOver(6) :
-    false;
-
-    tilesArr[2] === tilesArr[4] &&
-    tilesArr[4] === tilesArr[6] &&
-    tilesArr[2] === tilesArr[6] ?
-    gameOver(7) :
-    false;
-
-  }
-
-  const gameOver = (val) => {
-    isGameOver = true;
-    winningCombo = val;
-    switch (winningCombo) {
-      case 0:
-        tiles[0].style.color = $green;
-        tiles[1].style.color = $green;
-        tiles[2].style.color = $green;
-        break;
-      case 1:
-        tiles[3].style.color = $green;
-        tiles[4].style.color = $green;
-        tiles[5].style.color = $green;
-        break;
-      case 2:
-        tiles[6].style.color = $green;
-        tiles[7].style.color = $green;
-        tiles[8].style.color = $green;
-        break;
-      case 3:
-        tiles[0].style.color = $green;
-        tiles[3].style.color = $green;
-        tiles[6].style.color = $green;
-        break;
-      case 4: 
-        tiles[1].style.color = $green;
-        tiles[4].style.color = $green;
-        tiles[7].style.color = $green;
-        break;
-      case 5:
-        tiles[2].style.color = $green;
-        tiles[5].style.color = $green;
-        tiles[8].style.color = $green;
-        break;
-      case 6:
-        tiles[0].style.color = $green;
-        tiles[4].style.color = $green;
-        tiles[8].style.color = $green;
-        break;
-      case 7:
-        tiles[2].style.color = $green;
-        tiles[4].style.color = $green;
-        tiles[6].style.color = $green;
-    }
-    displayMessage();
-  }
-
-  const displayMessage = () => {
-    if (isGameOver) {
-      setTimeout(() => {
-        gameOverMsg.style.display = 'block';
-        playerTurn.textContent === 'X' ? 
-        winner.textContent = 'Player O wins!' : 
-        winner.textContent = 'Player X wins!';
-      }, 1000);
-    } 
-    if (!isGameOver) {
-      gameOverMsg.style.display = 'block';
-      winner.textContent = 'Draw!'
+  function updateScores() {
+    var sc = scores[isOnePlayer ? '1' : '2'];
+    scoreEls.x.textContent = sc.x;
+    scoreEls.o.textContent = sc.o;
+    scoreEls.d.textContent = sc.d;
+    labelX.textContent = isOnePlayer ? 'You (X)' : 'Player X';
+    labelO.textContent = isOnePlayer ? 'Computer (O)' : 'Player O';
+    for (var j = 0; j < modeBtns.length; j++) {
+      var on = (modeBtns[j].getAttribute('data-mode') === '1') === isOnePlayer;
+      modeBtns[j].setAttribute('aria-checked', on ? 'true' : 'false');
     }
   }
 
-  const reset = () => {
-    tiles.forEach((tile) => {
-      tile.textContent = '';
-      tile.style.color = $ivory;
-    });
-    tilesArr = [
-      0, 1, 2,
-      3, 4, 5,
-      6, 7, 8
-    ];
-    winningCombo = '';
+  // ---------- game ----------
+  function reset() {
+    clearTimeout(computerTimer);
+    clearTimeout(msgTimer);
+    cells = ['', '', '', '', '', '', '', '', ''];
     isXTurn = true;
     isGameOver = false;
-    validPlays = 0;
-    playerTurn.textContent = 'X';
-    gameOverMsg.style.display = 'none';
+    tiles.forEach(function (t, idx) {
+      t.textContent = '';
+      t.classList.remove('win', 'dim');
+      t.setAttribute('aria-label', 'Square ' + (idx + 1) + ', empty');
+    });
+    winLine.classList.remove('show');
+    gameOverMsg.classList.add('hidden');
+    updateTurn();
+    updateScores();
   }
 
-  const handleNumPlayers = () => {
-    isOnePlayer = !isOnePlayer;
-    isOnePlayer ? 
-    playerToggleBtn.style.float = 'left' : 
-    playerToggleBtn.style.float = 'right';
+  function place(index, mark) {
+    cells[index] = mark;
+    tiles[index].appendChild(markSvg(mark));
+    tiles[index].setAttribute('aria-label', 'Square ' + (index + 1) + ', ' + mark);
+    isXTurn = mark !== 'X';
+    if (!checkForEnd()) updateTurn();
   }
 
-  resetBtn.addEventListener('click', () => reset());
-  document.getElementById('toggle-switch').addEventListener('click', () => handleNumPlayers());
-});
+  function findWin() {
+    for (var j = 0; j < LINES.length; j++) {
+      var l = LINES[j];
+      if (cells[l[0]] && cells[l[0]] === cells[l[1]] && cells[l[1]] === cells[l[2]]) return l;
+    }
+    return null;
+  }
+
+  function cellCenter(idx) {
+    return [(idx % 3) * 100 + 50, Math.floor(idx / 3) * 100 + 50];
+  }
+
+  function checkForEnd() {
+    var line = findWin();
+    var full = cells.every(function (c) { return c !== ''; });
+    if (!line && !full) return false;
+    isGameOver = true;
+    clearTimeout(computerTimer);
+    updateTurn();
+    var key = isOnePlayer ? '1' : '2';
+    var text;
+    if (line) {
+      var mark = cells[line[0]];
+      scores[key][mark.toLowerCase()]++;
+      tiles.forEach(function (t, idx) {
+        if (line.indexOf(idx) >= 0) t.classList.add('win');
+        else t.classList.add('dim');
+      });
+      var a = cellCenter(line[0]), b = cellCenter(line[2]);
+      var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy);
+      var ext = 38 / len;
+      winLineEl.setAttribute('x1', a[0] - dx * ext);
+      winLineEl.setAttribute('y1', a[1] - dy * ext);
+      winLineEl.setAttribute('x2', b[0] + dx * ext);
+      winLineEl.setAttribute('y2', b[1] + dy * ext);
+      winLine.classList.add('show');
+      if (isOnePlayer) text = mark === 'X' ? 'You win!' : 'Computer wins!';
+      else text = 'Player ' + mark + ' wins!';
+      setStatus(mark, text, true);
+    } else {
+      scores[key].d++;
+      text = 'It’s a draw!';
+      setStatus('', text, true);
+    }
+    save(KEY_SCORES, JSON.stringify(scores));
+    updateScores();
+    msgTimer = setTimeout(function () {
+      winnerEl.textContent = text;
+      gameOverMsg.classList.remove('hidden');
+      resetBtn.focus({ preventScroll: true });
+    }, line ? 900 : 600);
+    return true;
+  }
+
+  function computerMove() {
+    if (isGameOver || isXTurn || !isOnePlayer) return;
+    var free = [];
+    for (var j = 0; j < 9; j++) if (!cells[j]) free.push(j);
+    if (!free.length) return;
+    place(free[Math.floor(Math.random() * free.length)], 'O');
+  }
+
+  function handleTile(index) {
+    if (isGameOver || cells[index]) return;
+    if (isOnePlayer) {
+      if (!isXTurn) return;
+      place(index, 'X');
+      if (!isGameOver) computerTimer = setTimeout(computerMove, 650);
+    } else {
+      place(index, isXTurn ? 'X' : 'O');
+    }
+  }
+
+  // Pointer Events: react on pointerup inside the same tile (fast on touch, no ghost clicks)
+  var downTile = -1;
+  gameboard.addEventListener('pointerdown', function (e) {
+    var t = e.target.closest ? e.target.closest('.tile') : null;
+    downTile = t ? tiles.indexOf(t) : -1;
+  });
+  gameboard.addEventListener('pointerup', function (e) {
+    var t = e.target.closest ? e.target.closest('.tile') : null;
+    var idx = t ? tiles.indexOf(t) : -1;
+    if (idx >= 0 && idx === downTile) handleTile(idx);
+    downTile = -1;
+  });
+  gameboard.addEventListener('pointercancel', function () { downTile = -1; });
+  // keyboard activation of a focused tile (Enter / Space) produces a click with detail 0
+  gameboard.addEventListener('click', function (e) {
+    if (e.detail !== 0) return;
+    var t = e.target.closest ? e.target.closest('.tile') : null;
+    if (t) handleTile(tiles.indexOf(t));
+  });
+  gameboard.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      handleTile(parseInt(e.key, 10) - 1);
+    } else if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey) {
+      reset();
+    }
+  });
+
+  function setMode(onePlayer) {
+    if (onePlayer === isOnePlayer) return;
+    isOnePlayer = onePlayer;
+    save(KEY_MODE, isOnePlayer ? '1' : '2');
+    reset();
+  }
+
+  for (var k = 0; k < modeBtns.length; k++) {
+    modeBtns[k].addEventListener('click', function () {
+      setMode(this.getAttribute('data-mode') === '1');
+    });
+  }
+
+  resetBtn.addEventListener('click', reset);
+  gameOverMsg.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+  gameOverMsg.addEventListener('pointerup', function (e) { e.stopPropagation(); });
+  document.getElementById('new-btn').addEventListener('click', reset);
+  document.getElementById('clear-btn').addEventListener('click', function () {
+    scores[isOnePlayer ? '1' : '2'] = { x: 0, o: 0, d: 0 };
+    save(KEY_SCORES, JSON.stringify(scores));
+    updateScores();
+  });
+
+  if (window.ResizeObserver) new ResizeObserver(fitBoard).observe(wrap);
+  window.addEventListener('resize', fitBoard);
+  window.addEventListener('orientationchange', function () { setTimeout(fitBoard, 200); });
+
+  fitBoard();
+  reset();
+})();
